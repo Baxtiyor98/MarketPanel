@@ -63,7 +63,7 @@ class Sale(models.Model):
     payment = models.CharField(max_length=10, choices=pay_type, null=True,blank=True)
 
     def __str__(self):
-        return self.seller.user.username
+        return f"{self.id}"
 
 class Card(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.SET_NULL, null=True)
@@ -71,6 +71,16 @@ class Card(models.Model):
     quantity = models.FloatField(default=1)
     sale_edited_date = models.DateTimeField(auto_now_add=True)
     sold_price = models.FloatField(default=0, null=True, blank=True)
+
+    @property
+    def add(self):
+        self.quantity = self.quantity + 1
+        self.save()
+
+    @property
+    def sub(self):
+        self.quantity = self.quantity - 1
+        self.save()
 
 
     def __str__(self):
