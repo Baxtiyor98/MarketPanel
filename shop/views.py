@@ -25,7 +25,6 @@ class ProductsAPIView(viewsets.ModelViewSet):
         context = [{"id": i.id, 'name': i.name,"price": i.price_with_discount,"shtrix":i.shtrix_code} for i in product]
         return Response(context)
 
-
 class CasherAPIView(viewsets.ModelViewSet):
     queryset = Casher.objects.all()
     serializer_class = CasherSerializers
@@ -34,15 +33,26 @@ class SaleAPIView(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializers
 
+class CardUpdateAPIView(viewsets.ModelViewSet):
+    queryset = Card.objects.all()
+    serializer_class = CardSerializers
+    http_method_names = ['put']
+
+    def update(self, request, *args, **kwargs):
+        card_product = Card.objects.get(id=kwargs['pk'])
+        quantity = int(request.data['quantity'])
+        card_product.add_quantity(quantity)
+        return Response(status=status.HTTP_200_OK)
+
 class CardAPIView(viewsets.ModelViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializers
 
     def list(self, request, *args, **kwargs):
         if request.data:
-            card_id = request.data['card_id']
             sale_id = request.data['sale_id']
             try:
+                card_id = request.data['card_id']
                 card_product = Card.objects.get(id=int(card_id))
                 if request.data['status']=='add':
                     card_product.add
@@ -53,9 +63,10 @@ class CardAPIView(viewsets.ModelViewSet):
                 pass
             card = Card.objects.filter(sale_id=sale_id).order_by('-id')
         else:
-            card = Card.objects.all()
-        context = [{"id":i.id,"product_id":i.product.id,'name':i.product.name,"quantity":i.quantity,"price":i.product.price_with_discount*i.quantity} for i in card]
-        return Response(context)
+            card = Card.objects.all().order_by('-id')
+        context = [{"id":i.id,'sale':i.sale.id,"product_id":i.product.id,'name':i.product.name,"quantity":i.quantity,"price":i.product.price_with_discount*i.quantity} for i in card]
+        print(card.values_list('sold_price',flat=True))
+        return Response({'total':sum(card.values_list('sold_price',flat=True)),'products':context},status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         # seller = request.data['seller']
@@ -71,13 +82,10 @@ class CardAPIView(viewsets.ModelViewSet):
         return Response(context)
 
     def update(self, request, *args, **kwargs):
-        print(request.data)
-        sale_id = request.data['sale_id']
-        card_products = Card.objects.filter(sale_id=int(sale_id))
+        card_products = Card.objects.filter(sale_id=int(kwargs['pk']))
         for i in card_products:
             i.delete()
         return Response(status=status.HTTP_200_OK)
-
 
 class VolumeAPIView(viewsets.ModelViewSet):
     queryset = Volume.objects.all()

@@ -49,6 +49,13 @@ class Casher(models.Model):
     def __str__(self):
         return self.user.username
 
+class PriceHistory(models.Model):
+    product = models.ForeignKey(Products, on_delete=models.SET_NULL, null=True)
+    new_price = models.FloatField(default=0)
+    changed_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.new_price}"
 
 class Sale(models.Model):
     pay_type = {
@@ -72,6 +79,11 @@ class Card(models.Model):
     sale_edited_date = models.DateTimeField(auto_now_add=True)
     sold_price = models.FloatField(default=0, null=True, blank=True)
 
+    def add_quantity(self,quantity):
+        self.quantity = quantity
+        self.sold_price = quantity * self.product.price_with_discount
+        self.save()
+
     @property
     def add(self):
         self.quantity = self.quantity + 1
@@ -84,4 +96,15 @@ class Card(models.Model):
 
 
     def __str__(self):
-        return self.id
+        return f"{self.id}"
+
+class SaleHistory(models.Model):
+    sale = models.ForeignKey(Sale,on_delete=models.SET_NULL,null=True)
+    seller = models.ForeignKey(Casher,on_delete=models.SET_NULL,null=True)
+    products = models.ForeignKey(Products,on_delete=models.SET_NULL,null=True)
+    quantity = models.FloatField(default=1)
+    date = models.DateTimeField(auto_now_add=True)
+    sold_price = models.FloatField(default=0, null=True)
+
+    def __str__(self):
+        return str(self.sale.id)
