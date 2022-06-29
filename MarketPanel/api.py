@@ -1,4 +1,5 @@
-from shop.views import CategoryAPIView,ProductsAPIView,SaleAPIView,CardAPIView,CasherAPIView,VolumeAPIView,CardUpdateAPIView
+from shop.views import CategoryAPIView,ProductsAPIView,SaleAPIView,CardAPIView,CasherAPIView,\
+    VolumeAPIView,CardUpdateAPIView,PriceHistoryAPIView
 from rest_framework import routers
 from django.urls import path
 
@@ -10,5 +11,6 @@ router.register(r'casher', CasherAPIView, basename='casher')
 router.register(r'volume', VolumeAPIView, basename='volume')
 router.register(r'card', CardAPIView, basename='card')
 router.register(r'card-update', CardUpdateAPIView, basename='card-update')
+router.register(r'price-history', PriceHistoryAPIView, basename='price-history')
 
 urlpatterns = router.urls

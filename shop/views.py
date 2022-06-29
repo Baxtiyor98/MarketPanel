@@ -1,7 +1,6 @@
 from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-
 from .serializer import *
 
 class CategoryAPIView(viewsets.ModelViewSet):
@@ -32,6 +31,24 @@ class CasherAPIView(viewsets.ModelViewSet):
 class SaleAPIView(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializers
+
+    def create(self, request, *args, **kwargs):
+        sales = Sale.objects.filter(payment='').order_by('id')
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            if len(sales)<3:
+                serializer.save()
+                return Response(status=status.HTTP_200_OK)
+            else:
+                for i in sales:
+                    if not Card.objects.filter(sale_id=int(i.id)):
+                        return Response({'sale_id':i.id}, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        for i in Card.objects.filter(sale_id=kwargs['pk']): i.delete()
+        return Response({'sale_id':kwargs['pk']})
 
 class CardUpdateAPIView(viewsets.ModelViewSet):
     queryset = Card.objects.all()
@@ -65,7 +82,6 @@ class CardAPIView(viewsets.ModelViewSet):
         else:
             card = Card.objects.all().order_by('-id')
         context = [{"id":i.id,'sale':i.sale.id,"product_id":i.product.id,'name':i.product.name,"quantity":i.quantity,"price":i.product.price_with_discount*i.quantity} for i in card]
-        print(card.values_list('sold_price',flat=True))
         return Response({'total':sum(card.values_list('sold_price',flat=True)),'products':context},status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -91,6 +107,24 @@ class VolumeAPIView(viewsets.ModelViewSet):
     queryset = Volume.objects.all()
     serializer_class = VolumeSerializers
 
-class CategoryAPIView(viewsets.ModelViewSet):
-    queryset = Categories.objects.all()
-    serializer_class = CategorySerializers
+class PriceHistoryAPIView(viewsets.ModelViewSet):
+    queryset = PriceHistory.objects.all()
+    serializer_class = PriceHistorySerializers
+
+    def create(self, request, *args, **kwargs):
+        instence = Products.objects.get(id=int(request.data['product']))
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            if int(instence.price) != int(request.data['new_price']):
+                serializer.save()
+                try:
+                    instence.price = serializer.data['new_price']
+                    instence.save()
+                except:
+                    return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response({'message':"Ok"},status=status.HTTP_200_OK)
+            return Response({'message':"Not changed"},status=status.HTTP_403_FORBIDDEN)
+
+
+
+

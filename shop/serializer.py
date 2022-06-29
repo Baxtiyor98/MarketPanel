@@ -31,3 +31,13 @@ class CardSerializers(serializers.ModelSerializer):
         model = Card
         fields = '__all__'
 
+class SaleHistorySerializers(serializers.ModelSerializer):
+    class Meta:
+        model = SaleHistory
+        fields = '__all__'
+
+class PriceHistorySerializers(serializers.ModelSerializer):
+    class Meta:
+        model = PriceHistory
+        fields = '__all__'
+
